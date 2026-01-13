@@ -1,0 +1,16 @@
+
+Error: Prisma schema validation - (validate wasm)
+Error code: P1012
+error: Error parsing attribute "@relation": The given constraint name `UnlockRequest_employeeId_fkey` has to be unique in the following namespace: on model `UnlockRequest` for primary key, indexes, unique constraints and foreign keys. Please provide a different name using the `map` argument.
+  -->  prisma\schema.prisma:305
+   | 
+304 |   employeeId Int
+305 |   staff      Staff        @relation(fields: [employeeId], references: [id])
+
+306 | 
+   | 
+
+Validation Error Count: 1
+[Context: validate]
+
+Prisma CLI Version : 6.19.1
