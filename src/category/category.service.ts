@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { PaginationQueryDto } from '../table/dto/pagination-query.dto';
 import { sendResponse, ApiResponse } from '../helpers/response';
 
 @Injectable()
@@ -14,19 +15,74 @@ export class CategoryService {
     });
 
     return sendResponse(201, {
-      message: 'Category created successfully',
+      msg: 'Category created successfully',
       data: category,
+      save_result: null
     });
   }
 
-  async findAll(): Promise<ApiResponse> {
-    const categories = await this.prisma.category.findMany({
-      orderBy: { displayOrder: 'asc' },
-    });
+  async findAll(query: PaginationQueryDto): Promise<ApiResponse> {
+    const {
+      current_page = 1,
+      per_page = 10,
+      keyword = '',
+      sort_by = 'displayOrder',
+      sort_dir = 'ASC',
+      date_col = '',
+      from_date = '',
+      to_date = '',
+    } = query;
+
+    const skip = (current_page - 1) * per_page;
+
+    const where: any = {};
+    if (keyword) {
+      where.name = { contains: keyword };
+    }
+
+    const orderBy: any = {};
+    if (sort_by) {
+      orderBy[sort_by] = sort_dir.toLowerCase();
+    }
+
+    const [categories, total] = await Promise.all([
+      this.prisma.category.findMany({
+        where,
+        orderBy,
+        skip,
+        take: per_page,
+      }),
+      this.prisma.category.count({ where }),
+    ]);
+
+    const total_pages = Math.ceil(total / per_page);
 
     return sendResponse(200, {
-      message: 'Categories retrieved successfully',
+      msg: 'success',
       data: categories,
+      pagination: {
+        current_page,
+        per_page,
+        total,
+        total_pages,
+        keyword,
+        sort_by,
+        sort_dir,
+        date_col,
+        from_date,
+        to_date,
+      },
+      current_page,
+      per_page,
+      total,
+      total_pages,
+      keyword,
+      sort_by,
+      sort_dir,
+      date_col,
+      from_date,
+      to_date,
+      save_result: null,
     });
   }
 
@@ -38,13 +94,15 @@ export class CategoryService {
 
     if (!category) {
       return sendResponse(404, {
-        message: 'Category not found',
+        msg: 'Category not found',
+        save_result: null
       });
     }
 
     return sendResponse(200, {
-      message: 'Category retrieved successfully',
+      msg: 'Category retrieved successfully',
       data: category,
+      save_result: null
     });
   }
 
@@ -56,12 +114,14 @@ export class CategoryService {
       });
 
       return sendResponse(200, {
-        message: 'Category updated successfully',
+        msg: 'Category updated successfully',
         data: category,
+        save_result: null
       });
     } catch (error) {
       return sendResponse(404, {
-        message: `Category with ID ${id} not found`,
+        msg: `Category with ID ${id} not found`,
+        save_result: error
       });
     }
   }
@@ -73,12 +133,14 @@ export class CategoryService {
       });
 
       return sendResponse(200, {
-        message: 'Category deleted successfully',
+        msg: 'Category deleted successfully',
         data: category,
+        save_result: null
       });
     } catch (error) {
       return sendResponse(404, {
-        message: `Category with ID ${id} not found`,
+        msg: `Category with ID ${id} not found`,
+        save_result: error
       });
     }
   }

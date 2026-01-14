@@ -9,6 +9,10 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
     transform: true,
   }));
-  await app.listen(process.env.PORT ?? 3000);
+  app.enableCors({
+    origin: 'http://localhost:5173', // frontend Vite dev server
+    credentials: true,
+  });
+  await app.listen(process.env.PORT ?? 8004);
 }
 bootstrap();
